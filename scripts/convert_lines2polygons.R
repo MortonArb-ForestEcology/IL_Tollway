@@ -1,6 +1,7 @@
 # Attempt to convert the polylines to polygons with attribute info
 library(rgdal)
 library(rgeos)
+library(raster)
 
 # Workflow steps
 # 1. read in the shapefile
@@ -40,7 +41,28 @@ plot(tollway.trees, xlim=c(bbox.trees[1,2]-xrange/10, bbox.trees[1,2]-(xrange/15
 plot(test.poly, xlim=c(bbox.trees[1,2]-xrange/10, bbox.trees[1,2]-(xrange/15)), ylim=c(bbox.trees[2,1] + yrange/150, bbox.trees[2,1]+yrange/50))
 
 
+# get acreage of polygons
+poly.area <- area(test.poly)/43560 # area in acres
+summary(poly.area)
 
+
+poly.weird <- which(poly.area<0)
+
+plot(test.poly[1:5])
+plot(test.poly[poly.weird[3]])
+
+summary(poly.area[poly.area>0])
+
+length(poly.area[which(poly.area>0.5)])
+length(poly.area[which(poly.area>1)])
+
+plot(test.poly)
+plot(test.poly[which(poly.area>1)], col="red", border="red", add=T, xlim=c(bbox(test.poly)[1,1], bbox(test.poly)[1,2]), ylim=c(bbox(test.poly)[2,1], bbox(test.poly)[2,2]))
+
+summary(poly.area2)
+
+length(poly.area); length(poly.area2)
+hist(poly.area)
 
 
 # 3. determine which polygons contain others (i.e. is sparse plantings)
