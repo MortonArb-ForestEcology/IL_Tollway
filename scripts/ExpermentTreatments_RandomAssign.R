@@ -44,7 +44,7 @@ plot.df <- data.frame(block = as.factor(rep(blocks, each=length(treatments))), p
 
 set.seed(1529) # Setting the seed so this can be reproduced
 for(i in blocks){
-	treats <- sample(treatments, 5, replace=F)
+	treats <- sample(treatments, length(treatments), replace=F)
 	plot.df[plot.df$block==i, "treatment"] <- treats
 }
 plot.df$treatment <- as.factor(plot.df$treatment)
@@ -118,7 +118,7 @@ write.csv(tree.df, file.path(save.out, "SoilAmmendments_DenseTree_TreatmentAssig
 # -------------------
 treatments <- c("Control", "Biosolids", "Composted Biosolids")
 blocks <- 1:9
-trees <- 1:18
+trees <- 1:(nrow(species) * length(treatments))
 
 # Creating the data frame for assignment 
 tree.df <- data.frame(block = as.factor(rep(blocks, each=length(trees))), tree=as.factor(trees), treatment=NA, species=NA)
@@ -131,14 +131,14 @@ set.seed(851)
 for(i in unique(tree.df$block)){
   for(spp in unique(species$common.name)){
     # Randomly pick 3 unassigned trees
-    trees.now <- sample(unique(tree.df[tree.df$block==i & is.na(tree.df$species), "tree"]), 3, replace=F)
+    trees.now <- sample(unique(tree.df[tree.df$block==i & is.na(tree.df$species), "tree"]), length(treatments), replace=F)
 
     tree.df[tree.df$block==i & tree.df$tree %in% trees.now, "species"] <- spp  
 
     # Randomly assign an order to the treatmetns for those three trees
     # Note: Using a loop otherwise trees will get assigned in numerical order, 
     #       which we don't necessarily want
-    treats.now <- sample(treatments, 3, replace=F)
+    treats.now <- sample(treatments, length(trees.now), replace=F)
     for(j in 1:length(trees.now)){
       tree.df[tree.df$block==i & tree.df$tree==trees.now[j], "treatment"] <- treats.now[j]
     }
@@ -155,4 +155,54 @@ write.csv(tree.df, file.path(save.out, "SoilAmmendments_ScatteredTree_TreatmentA
 
 
 
+# ------------------------------------
+# Experiment 2: Planting Size
+# Design Basics: Random Block Design
+# -- Size treatments:
+#    1. Control (no ammendment)
+#    2. Biosolids
+#    3. Composted biosolids
+#    4. Leaf Compost
+#    5. 50:50 Biosolid-Biochar mix
+# -- Species: total 6
+# ------------------------------------
+species <- data.frame(common.name.     =c("sugar maple"   , "autumn blaze maple", "northern catalpa", "shagbark hickory", "red oak"      , "big-leaved linden"),
+                      scientific.name  =c("Acer saccharum", "Acer x freemani"   , "Catalpa sepciosa", "Carya ovata"     , "Quercus rubra", "Tilia platyphyos" ))
+plant.sizes <- c("3 gal", "7 gal", "15 gal", "BB")
+blocks <- 1:10
+trees  <- 1:(nrow(species) * length(plant.sizes))
+
+# Creating the data frame for assignment 
+tree.df <- data.frame(block = as.factor(rep(blocks, each=length(trees))), tree=as.factor(trees), size=NA, species=NA)
+summary(tree.df)
+dim(tree.df)
+tree.df[1:25,]
+
+# Making a loop to randomly assign species & treatments
+set.seed(913)
+for(i in unique(tree.df$block)){
+  for(spp in unique(species$common.name)){
+    # Randomly pick 3 unassigned trees
+    trees.now <- sample(unique(tree.df[tree.df$block==i & is.na(tree.df$species), "tree"]), length(plant.sizes), replace=F)
+    
+    tree.df[tree.df$block==i & tree.df$tree %in% trees.now, "species"] <- spp  
+    
+    # Randomly assign an order to the treatmetns for those three trees
+    # Note: Using a loop otherwise trees will get assigned in numerical order, 
+    #       which we don't necessarily want
+    treats.now <- sample(plant.sizes, length(trees.now), replace=F)
+    for(j in 1:length(trees.now)){
+      tree.df[tree.df$block==i & tree.df$tree==trees.now[j], "size"] <- treats.now[j]
+    }
+  } # end species assignment
+} # End treatment assignment
+
+tree.df$size <- as.factor(tree.df$size)
+tree.df$species <- as.factor(tree.df$species)
+summary(tree.df)
+
+summary(tree.df[tree.df$block==1,])
+tree.df[1:25,]
+
+write.csv(tree.df, file.path(save.out, "PlantingSize_DenseTree_TreatmentAssignments_Trees.csv"), row.names=F)
 # ------------------------------------
