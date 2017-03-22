@@ -11,7 +11,6 @@ save.out <- "~/Google Drive/IL Tollway/"
 # ------------------------------------
 # Experiment 1: Soil Ammendments
 # Design Basics: Random Block Design
-# -- 4 blocks; 5 treatments (plots) per block, 15 trees per plot (3 rows of 5)
 # -- Soil treatments:
 #    1. Control (no ammendment)
 #    2. Biosolids
@@ -21,16 +20,24 @@ save.out <- "~/Google Drive/IL Tollway/"
 # -- Species: total 6
 #    -- hardiness: tough, intermediate, sensitive
 #    -- Mycorrhizal Association: Arbuscular mycorrhizal (AM), ectomycorrhizal (ECM)
-  
+# 2 Parts: Dense & Scattered Tree Plantings
+# -- Part A: Dense Tree: Random Block Design w/ treatments in plots
+#    -- 4 blocks; 5 treatments (plots) per block, 15 trees per plot (3 rows of 5)
+# -- Part B: Scattered Tree: Random Block Design with treatments on trees
 # ------------------------------------
-treatments <- c("Control", "Biosolids", "Composted Biosolids", "Leaf Compost", "Biosolid-Biochar Mix")
-blocks <- 1:4
-plots <- 1:20
-trees <- 1:15
 species <- data.frame(common.name.     =c("northern catalpa", "honeylocust"          , "tulip tree"             , "shagbark hickory", "sugar maple"   , "red oak"      ),
                       scientific.name  =c("Catalpa speciosa", "Gleditsia triacanthos", "Liriodendron tulipifera", "Carya ovata"     , "Acer saccharum", "Quercus rubra"),
                       mycorrhizal.assoc=c("arbuscular"      , "ecto"                 , "arbuscular"             , "ecto"            , "arbuscular"    , "ecto"         ),
                       toughness.       =c("tough"           , "tough"                , "intermediate"           , "intermediate"    , "sensitive"     , "sensitive"    ))
+
+
+# -------------------
+# Part A: Dense Tree Planting
+# -------------------
+blocks <- 1:4
+plots <- 1:20
+trees <- 1:15
+treatments <- c("Control", "Biosolids", "Composted Biosolids", "Leaf Compost", "Biosolid-Biochar Mix")
 
 # Setting up the plot treatment data frame
 plot.df <- data.frame(block = as.factor(rep(blocks, each=length(treatments))), plot=as.factor(plots))
@@ -98,7 +105,54 @@ summary(tree.df[tree.df$treatment=="Composted Biosolids",])
 summary(tree.df[tree.df$treatment=="Leaf Compost",])
 summary(tree.df[tree.df$treatment=="Biosolid-Biochar Mix",])
 
-write.csv(plot.df, file.path(save.out, "SoilAmmendments_TreatmentAssignments_Plots.csv"), row.names=F)
-write.csv(tree.df, file.path(save.out, "SoilAmmendments_TreatmentAssignments_Trees.csv"), row.names=F)
+write.csv(plot.df, file.path(save.out, "SoilAmmendments_DenseTree_TreatmentAssignments_Plots.csv"), row.names=F)
+write.csv(tree.df, file.path(save.out, "SoilAmmendments_DenseTree_TreatmentAssignments_Trees.csv"), row.names=F)
+# -------------------
+
+
+# -------------------
+# Part B: Scattered Tree
+# Randomly Assign Trees + Treatments to each block
+# All Species as Part A, but subset of treatments
+# -- 1 tree of each species/treatment per block
+# -------------------
+treatments <- c("Control", "Biosolids", "Composted Biosolids")
+blocks <- 1:9
+trees <- 1:18
+
+# Creating the data frame for assignment 
+tree.df <- data.frame(block = as.factor(rep(blocks, each=length(trees))), tree=as.factor(trees), treatment=NA, species=NA)
+summary(tree.df)
+dim(tree.df)
+tree.df[1:25,]
+
+# Making a loop to randomly assign species & treatments
+set.seed(851)
+for(i in unique(tree.df$block)){
+  for(spp in unique(species$common.name)){
+    # Randomly pick 3 unassigned trees
+    trees.now <- sample(unique(tree.df[tree.df$block==i & is.na(tree.df$species), "tree"]), 3, replace=F)
+
+    tree.df[tree.df$block==i & tree.df$tree %in% trees.now, "species"] <- spp  
+
+    # Randomly assign an order to the treatmetns for those three trees
+    # Note: Using a loop otherwise trees will get assigned in numerical order, 
+    #       which we don't necessarily want
+    treats.now <- sample(treatments, 3, replace=F)
+    for(j in 1:length(trees.now)){
+      tree.df[tree.df$block==i & tree.df$tree==trees.now[j], "treatment"] <- treats.now[j]
+    }
+  } # end species assignment
+} # End treatment assignment
+
+tree.df$treatment <- as.factor(tree.df$treatment)
+tree.df$species <- as.factor(tree.df$species)
+summary(tree.df)
+tree.df[1:25,]
+
+write.csv(tree.df, file.path(save.out, "SoilAmmendments_ScatteredTree_TreatmentAssignments_Trees.csv"), row.names=F)
+# -------------------
+
+
 
 # ------------------------------------
